@@ -1,0 +1,35 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Large Datasets / Memory-mapped files (Do NOT commit)
+dataset_mmap.npy
+*.npy
+*.npz
+
+# Model Weights and Checkpoints (Usually too large for GitHub)
+weights/
+*.pth
+*.pt
+
+# OS specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Virtual Environment
+venv/
+env/
+.venv/
+
+# IDE / Editor
+.vscode/
+.idea/
+
+# Logs
+*.log
