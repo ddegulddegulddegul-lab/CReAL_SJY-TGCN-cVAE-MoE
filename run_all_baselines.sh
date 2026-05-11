@@ -1,8 +1,11 @@
 #!/bin/bash
 
 # 자동화된 리눅스 백그라운드 학습 스크립트 (50 Epoch)
-LOG_FILE="/home/song/reserch/iiw/baselines_training.log"
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LOG_FILE="$PROJECT_ROOT/baselines_training.log"
 BASELINES=("MLP_cVAE_MoE" "LSTM_cVAE_MoE" "TCN_cVAE_MoE" "GCN_cVAE_MoE" "TGCN_cVAE_TGCN")
+
+cd "$PROJECT_ROOT" || exit 1
 
 echo "==========================================================" > "$LOG_FILE"
 echo "Starting Bulk Training & Evaluation at $(date)" >> "$LOG_FILE"
@@ -14,7 +17,7 @@ for BASE in "${BASELINES[@]}"; do
     echo "🚀 [$(date)] Starting Training for $BASE " >> "$LOG_FILE"
     echo "==========================================================" >> "$LOG_FILE"
     
-    TARGET_DIR="/home/song/reserch/iiw/baselines/$BASE"
+    TARGET_DIR="$PROJECT_ROOT/baselines/$BASE"
     WEIGHTS_DIR="$TARGET_DIR/weights"
     
     # 가중치 폴더 생성 및 기존 파일 강제 초기화

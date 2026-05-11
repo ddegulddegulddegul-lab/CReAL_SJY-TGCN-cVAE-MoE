@@ -182,8 +182,8 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Evaluate Proposed TGCN Model Metrics")
-    parser.add_argument('--mmap_path', type=str, default='/home/song/reserch/iiw/dataset_mmap.npy', help='Path to combined memmap data')
-    parser.add_argument('--weights_path', type=str, default='/home/song/reserch/iiw/proposed/TGCN_cVAE_TGCN/weights/best.pth', help='Path to best trained weights')
+    parser.add_argument('--mmap_path', type=str, default='./dataset_mmap.npy', help='Path to combined memmap data')
+    parser.add_argument('--weights_path', type=str, default='./baselines/TGCN_cVAE_TGCN/weights/best.pth', help='Path to best trained weights')
     parser.add_argument('--batch_size', type=int, default=16)
     
     args = parser.parse_args()

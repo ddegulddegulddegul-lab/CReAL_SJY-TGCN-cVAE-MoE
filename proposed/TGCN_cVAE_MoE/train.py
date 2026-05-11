@@ -192,8 +192,8 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train Proposed TGCN Model")
-    parser.add_argument('--mmap_path', type=str, default='/home/song/reserch/iiw/dataset_mmap.npy', help='Path to combined memmap data')
-    parser.add_argument('--save_dir', type=str, default='./weights', help='Directory to save model weights')
+    parser.add_argument('--mmap_path', type=str, default='./dataset_mmap.npy', help='Path to combined memmap data')
+    parser.add_argument('--save_dir', type=str, default='./proposed/TGCN_cVAE_MoE/weights', help='Directory to save model weights')
     parser.add_argument('--epochs', type=int, default=50)
     parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--lr', type=float, default=1e-3)

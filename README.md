@@ -50,8 +50,7 @@ cd YourRepository
 
 2. Install dependencies:
 ```bash
-pip install torch torchvision numpy matplotlib tqdm
-pip install viser fvcore tensorboard
+pip install -r requirements.txt
 ```
 
 ## 🏋️‍♂️ Training
@@ -62,23 +61,23 @@ To train the proposed model:
 ```bash
 python proposed/TGCN_cVAE_MoE/train.py \
     --mmap_path ./dataset_mmap.npy \
-    --save_dir ./weights/proposed \
+    --save_dir ./proposed/TGCN_cVAE_MoE/weights \
     --epochs 50 \
     --batch_size 32 \
     --num_workers 8
 ```
 You can monitor the training progress via TensorBoard:
 ```bash
-tensorboard --logdir ./weights/proposed/logs
+tensorboard --logdir ./proposed/TGCN_cVAE_MoE/weights/logs
 ```
 
 ## 📊 Evaluation
 
-To evaluate the best model on the strictly isolated test split:
+To evaluate the best model on the held-out test split:
 ```bash
 python proposed/TGCN_cVAE_MoE/eval.py \
     --mmap_path ./dataset_mmap.npy \
-    --weights_path ./weights/proposed/best.pth \
+    --weights_path ./proposed/TGCN_cVAE_MoE/weights/best.pth \
     --batch_size 16
 ```
 This script outputs the Overall IIW MAE, Active IIW MAE (focused on sparse contact points), Temporal Jittering, and computational efficiency (FLOPs / Inference Speed).
@@ -88,8 +87,8 @@ This script outputs the Overall IIW MAE, Active IIW MAE (focused on sparse conta
 We provide an interactive 3D web GUI powered by `viser` to intuitively inspect how the human skeleton interacts with the furniture rays.
 
 ```bash
-python visualize.py \
-    --weights_path ./weights/proposed/best.pth \
+python proposed/TGCN_cVAE_MoE/visualize.py \
+    --weights_path ./proposed/TGCN_cVAE_MoE/weights/best.pth \
     --data_dir ./data/ \
     --port 8080
 ```

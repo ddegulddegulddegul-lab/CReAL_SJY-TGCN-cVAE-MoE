@@ -10,7 +10,7 @@ class IIWDataset(Dataset):
             seq_len (int): Length of the time sequence (T frames).
             stride (int): Sliding window stride to extract sequences.
             split_mode (str): Data splitting mode ['train', 'val', 'test', 'all'].
-                              Uses 80/10/10 ratio to prevent data leakage.
+                              Uses chronological 80/10/10 frame splits.
         """
         self.seq_len = seq_len
         self.stride = stride

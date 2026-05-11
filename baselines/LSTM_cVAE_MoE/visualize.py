@@ -202,8 +202,8 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Visualize LSTM IIW Model")
-    parser.add_argument("--data_dir", type=str, default="/home/song/reserch/iiw/data/", help="Folder containing .npz sequences")
-    parser.add_argument("--weights_path", type=str, default="./weights/best.pth", help="Path to trained model weights")
+    parser.add_argument("--data_dir", type=str, default="./data/", help="Folder containing .npz sequences")
+    parser.add_argument("--weights_path", type=str, default="./baselines/LSTM_cVAE_MoE/weights/best.pth", help="Path to trained model weights")
     parser.add_argument("--port", type=int, default=8080)
     args = parser.parse_args()
     main(args)

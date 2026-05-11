@@ -17,6 +17,7 @@ weights/
 .DS_Store
 .DS_Store?
 ._*
+*:Zone.Identifier
 .Spotlight-V100
 .Trashes
 ehthumbs.db

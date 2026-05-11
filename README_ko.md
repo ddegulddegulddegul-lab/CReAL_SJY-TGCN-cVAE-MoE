@@ -50,8 +50,7 @@ cd 레포지토리이름
 
 2. 필수 라이브러리를 설치합니다:
 ```bash
-pip install torch torchvision numpy matplotlib tqdm
-pip install viser fvcore tensorboard
+pip install -r requirements.txt
 ```
 
 ## 🏋️‍♂️ 모델 학습 (Training)
@@ -62,23 +61,23 @@ pip install viser fvcore tensorboard
 ```bash
 python proposed/TGCN_cVAE_MoE/train.py \
     --mmap_path ./dataset_mmap.npy \
-    --save_dir ./weights/proposed \
+    --save_dir ./proposed/TGCN_cVAE_MoE/weights \
     --epochs 50 \
     --batch_size 32 \
     --num_workers 8
 ```
 학습 상태는 텐서보드(TensorBoard)를 통해 실시간으로 모니터링할 수 있습니다.
 ```bash
-tensorboard --logdir ./weights/proposed/logs
+tensorboard --logdir ./proposed/TGCN_cVAE_MoE/weights/logs
 ```
 
 ## 📊 모델 평가 (Evaluation)
 
-학습 과정에서 단 한 번도 사용되지 않은 완벽히 격리된 테스트셋(Test-split) 위에서 성능을 평가합니다. Jittering 등을 포함하여 논문에 표기된 핵심 성능 지표들을 출력합니다.
+학습에 사용하지 않은 held-out 테스트셋(Test-split) 위에서 성능을 평가합니다. Jittering 등을 포함하여 논문에 표기된 핵심 성능 지표들을 출력합니다.
 ```bash
 python proposed/TGCN_cVAE_MoE/eval.py \
     --mmap_path ./dataset_mmap.npy \
-    --weights_path ./weights/proposed/best.pth \
+    --weights_path ./proposed/TGCN_cVAE_MoE/weights/best.pth \
     --batch_size 16
 ```
 
@@ -87,8 +86,8 @@ python proposed/TGCN_cVAE_MoE/eval.py \
 학습이 끝난 모델이 인체의 어떤 부위와 어떤 가구의 접촉(IIW)을 예측하는지 3D 공간 상에서 직관적으로 확인할 수 있는 `viser` 기반 웹 시각화 툴을 제공합니다.
 
 ```bash
-python visualize.py \
-    --weights_path ./weights/proposed/best.pth \
+python proposed/TGCN_cVAE_MoE/visualize.py \
+    --weights_path ./proposed/TGCN_cVAE_MoE/weights/best.pth \
     --data_dir ./data/ \
     --port 8080
 ```

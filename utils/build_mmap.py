@@ -61,9 +61,9 @@ def build_mmap_dataset(data_dir, mmap_path):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Build Memory-Mapped Dataset for IIW Project")
-    parser.add_argument('--data_dir', type=str, default='/home/song/reserch/iiw/Extraction', 
+    parser.add_argument('--data_dir', type=str, default='./Extraction',
                         help='Path to the directory containing the source .txt files.')
-    parser.add_argument('--mmap_path', type=str, default='/home/song/reserch/iiw/dataset_mmap.npy', 
+    parser.add_argument('--mmap_path', type=str, default='./dataset_mmap.npy',
                         help='Output path where the .npy mmap file should be saved.')
     
     args = parser.parse_args()
