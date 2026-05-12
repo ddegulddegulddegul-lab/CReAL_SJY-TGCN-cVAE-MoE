@@ -150,7 +150,15 @@ class MoEDecoder(nn.Module):
         self.num_experts = num_experts
         hidden_dim = in_channels // 2
         
-        self.experts = nn.ModuleList([
+        self.intensity_experts = nn.ModuleList([
+            nn.Sequential(
+                nn.Linear(in_channels, hidden_dim),
+                nn.ReLU(),
+                nn.Linear(hidden_dim, out_dim)
+            ) for _ in range(num_experts)
+        ])
+
+        self.contact_experts = nn.ModuleList([
             nn.Sequential(
                 nn.Linear(in_channels, hidden_dim),
                 nn.ReLU(),
@@ -168,9 +176,16 @@ class MoEDecoder(nn.Module):
     def forward(self, z_c):
         gate_weights = self.gate(z_c) 
         self.last_gate_weights = gate_weights.detach()
-        expert_outputs = torch.stack([expert(z_c) for expert in self.experts], dim=-1) 
-        out = torch.sum(expert_outputs * gate_weights.unsqueeze(-2), dim=-1) 
-        return torch.relu(out) 
+        intensity_logits = torch.stack([expert(z_c) for expert in self.intensity_experts], dim=-1)
+        contact_logits = torch.stack([expert(z_c) for expert in self.contact_experts], dim=-1)
+
+        intensity_logits = torch.sum(intensity_logits * gate_weights.unsqueeze(-2), dim=-1)
+        contact_logits = torch.sum(contact_logits * gate_weights.unsqueeze(-2), dim=-1)
+
+        contact_prob = torch.sigmoid(contact_logits)
+        intensity = torch.sigmoid(intensity_logits)
+        pred = contact_prob * intensity
+        return pred, contact_logits
 
 class IIWTGCN_cVAE(nn.Module):
     def __init__(self, node_in_dim=9, ray_in_dim=4, hidden_dim=64, z_dim=32, num_body_parts=6, num_experts=3):
@@ -199,7 +214,8 @@ class IIWTGCN_cVAE(nn.Module):
         z_expanded = z.unsqueeze(2).expand(B, T, num_rays, -1)
         z_c = torch.cat([z_expanded, encoded_rays], dim=-1) 
         
-        pred_iiw = self.decoder(z_c) 
+        pred_iiw, contact_logits = self.decoder(z_c)
         pred_iiw = pred_iiw.permute(0, 1, 3, 2).contiguous()
+        contact_logits = contact_logits.permute(0, 1, 3, 2).contiguous()
         
-        return pred_iiw, mu, logvar
+        return pred_iiw, contact_logits, mu, logvar

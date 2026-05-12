@@ -10,7 +10,7 @@ import viser
 # Bind to shared utils and local model
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../utils')))
 from dataset import get_dataloader
-from model import IIWTGCN_cVAE_MLP
+from model import IIWTGCN_cVAE_TGCN
 
 def get_all_data_files(base_dir):
     """Recursively scans the provided directory for .npz files."""
@@ -28,7 +28,7 @@ def pre_load_all_data(weights_path, data_files, device):
         print("Warning: No .npz files found in the specified data directory!")
         return {}
         
-    model = IIWTGCN_cVAE_MLP().to(device)
+    model = IIWTGCN_cVAE_TGCN().to(device)
     if os.path.exists(weights_path):
         model.load_state_dict(torch.load(weights_path, map_location=device, weights_only=True))
         print(f"Loaded weights from {weights_path}")
@@ -201,7 +201,7 @@ def main(args):
             time.sleep(0.1)
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser("Visualize TGCN+MLP IIW Model")
+    parser = argparse.ArgumentParser("Visualize TGCN-cVAE-TGCN IIW Model")
     parser.add_argument("--data_dir", type=str, default="./data/", help="Folder containing .npz sequences")
     parser.add_argument("--weights_path", type=str, default="./baselines/TGCN_cVAE_TGCN/weights/best.pth", help="Path to trained model weights")
     parser.add_argument("--port", type=int, default=8080)

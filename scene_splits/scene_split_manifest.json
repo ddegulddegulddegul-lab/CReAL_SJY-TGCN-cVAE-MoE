@@ -1,0 +1,132 @@
+{
+  "data_dir": "/home/song/research/iiw/Extraction",
+  "feature_dim": 10464,
+  "total_scenes": 11,
+  "total_frames": 88185,
+  "ratios_requested": {
+    "train": 0.8,
+    "val": 0.1,
+    "test": 0.1
+  },
+  "splits": {
+    "train": {
+      "mmap_path": "/home/song/research/iiw/scene_splits/dataset_scene_train.npy",
+      "num_scenes": 7,
+      "num_files": 335,
+      "num_frames": 70207,
+      "scene_ranges": [
+        {
+          "scene": "hc_Extraction",
+          "start": 0,
+          "end": 2525,
+          "num_frames": 2525,
+          "num_files": 12
+        },
+        {
+          "scene": "hc_hd_Extraction",
+          "start": 2525,
+          "end": 20888,
+          "num_frames": 18363,
+          "num_files": 85
+        },
+        {
+          "scene": "hcw_hdw_Extraction",
+          "start": 20888,
+          "end": 29136,
+          "num_frames": 8248,
+          "num_files": 36
+        },
+        {
+          "scene": "hd_Extraction",
+          "start": 29136,
+          "end": 36974,
+          "num_frames": 7838,
+          "num_files": 44
+        },
+        {
+          "scene": "lc_ld_Extraction",
+          "start": 36974,
+          "end": 45276,
+          "num_frames": 8302,
+          "num_files": 43
+        },
+        {
+          "scene": "lc_ld_a_Extraction",
+          "start": 45276,
+          "end": 62543,
+          "num_frames": 17267,
+          "num_files": 79
+        },
+        {
+          "scene": "lcw_ldw_Extraction",
+          "start": 62543,
+          "end": 70207,
+          "num_frames": 7664,
+          "num_files": 36
+        }
+      ],
+      "scenes": [
+        "hc_Extraction",
+        "hc_hd_Extraction",
+        "hcw_hdw_Extraction",
+        "hd_Extraction",
+        "lc_ld_Extraction",
+        "lc_ld_a_Extraction",
+        "lcw_ldw_Extraction"
+      ]
+    },
+    "val": {
+      "mmap_path": "/home/song/research/iiw/scene_splits/dataset_scene_val.npy",
+      "num_scenes": 2,
+      "num_files": 41,
+      "num_frames": 8266,
+      "scene_ranges": [
+        {
+          "scene": "hdw_Extraction",
+          "start": 0,
+          "end": 2704,
+          "num_frames": 2704,
+          "num_files": 16
+        },
+        {
+          "scene": "lcw_Extraction",
+          "start": 2704,
+          "end": 8266,
+          "num_frames": 5562,
+          "num_files": 25
+        }
+      ],
+      "scenes": [
+        "hdw_Extraction",
+        "lcw_Extraction"
+      ]
+    },
+    "test": {
+      "mmap_path": "/home/song/research/iiw/scene_splits/dataset_scene_test.npy",
+      "num_scenes": 2,
+      "num_files": 44,
+      "num_frames": 9712,
+      "scene_ranges": [
+        {
+          "scene": "hcw_Extraction",
+          "start": 0,
+          "end": 2241,
+          "num_frames": 2241,
+          "num_files": 10
+        },
+        {
+          "scene": "lc_Extraction",
+          "start": 2241,
+          "end": 9712,
+          "num_frames": 7471,
+          "num_files": 34
+        }
+      ],
+      "scenes": [
+        "hcw_Extraction",
+        "lc_Extraction"
+      ]
+    }
+  },
+  "note": "Scene-level split from Extraction only. The data/ folder is intentionally excluded for final external testing."
+}

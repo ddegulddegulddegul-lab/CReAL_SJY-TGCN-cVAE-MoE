@@ -52,6 +52,14 @@ def compute_metrics(pred_iiw, gt_iiw, node_feats, ray_feats):
     jitter_diff = torch.abs(pred_diff - gt_diff)
     jittering = jitter_diff.sum().item()
     jittering_elements = B * (T - 1) * num_parts * num_rays
+
+    part_active = active_mask.sum(dim=(0, 1, 3)).detach().cpu().numpy()
+    part_active_mae = torch.abs(pred_iiw - gt_iiw).masked_fill(~active_mask, 0).sum(dim=(0, 1, 3)).detach().cpu().numpy()
+    part_gt_sum = gt_iiw.masked_fill(~active_mask, 0).sum(dim=(0, 1, 3)).detach().cpu().numpy()
+    part_pred_on_active_sum = pred_iiw.masked_fill(~active_mask, 0).sum(dim=(0, 1, 3)).detach().cpu().numpy()
+    part_recall_01 = ((pred_iiw >= 0.1) & active_mask).sum(dim=(0, 1, 3)).detach().cpu().numpy()
+    part_recall_03 = ((pred_iiw >= 0.3) & (gt_iiw >= 0.3)).sum(dim=(0, 1, 3)).detach().cpu().numpy()
+    part_gt_03 = (gt_iiw >= 0.3).sum(dim=(0, 1, 3)).detach().cpu().numpy()
     
     return {
         'mae_sum': mae,
@@ -59,7 +67,14 @@ def compute_metrics(pred_iiw, gt_iiw, node_feats, ray_feats):
         'active_mae_sum': active_mae,
         'active_elements': max(active_elements, 1),
         'jit_sum': jittering,
-        'jit_elements': max(jittering_elements, 1)
+        'jit_elements': max(jittering_elements, 1),
+        'part_active': part_active,
+        'part_active_mae': part_active_mae,
+        'part_gt_sum': part_gt_sum,
+        'part_pred_on_active_sum': part_pred_on_active_sum,
+        'part_recall_01': part_recall_01,
+        'part_recall_03': part_recall_03,
+        'part_gt_03': part_gt_03,
     }
 
 def main(args):
@@ -72,12 +87,13 @@ def main(args):
     # 1. Load Test Dataloader
     print("Loading Memmap Array...")
     data_array = np.load(args.mmap_path, mmap_mode='r')
-    print("Initializing Test DataLoader (10% Split)...")
+    print("Initializing Test DataLoader...")
     _, test_loader = get_dataloader(data_array=data_array, 
                                  batch_size=args.batch_size, 
-                                 seq_len=60, 
+                                 seq_len=args.seq_len,
+                                 stride=args.stride,
                                  num_workers=0, 
-                                 split_mode='test')
+                                 split_mode=args.split_mode)
     
     if len(test_loader) == 0:
         print("Error: Test dataset is empty. Check your data split.")
@@ -106,7 +122,14 @@ def main(args):
         'mae_sum': 0.0, 'elements': 0,
         'active_mae_sum': 0.0, 'active_elements': 0,
         'jit_sum': 0.0, 'jit_elements': 0,
-        'infer_time': 0.0, 'infer_batches': 0
+        'infer_time': 0.0, 'infer_batches': 0,
+        'part_active': np.zeros(6, dtype=np.float64),
+        'part_active_mae': np.zeros(6, dtype=np.float64),
+        'part_gt_sum': np.zeros(6, dtype=np.float64),
+        'part_pred_on_active_sum': np.zeros(6, dtype=np.float64),
+        'part_recall_01': np.zeros(6, dtype=np.float64),
+        'part_recall_03': np.zeros(6, dtype=np.float64),
+        'part_gt_03': np.zeros(6, dtype=np.float64),
     }
     
     print("Evaluating over strictly isolated Test Set...")
@@ -180,11 +203,28 @@ def main(args):
     print(f"6. FLOPs (1 seq)   : {flops_str}")
     print("="*50 + "\n")
 
+    part_names = ["pelvis/base", "spine", "right hand", "left hand", "right foot", "left foot"]
+    print("[4. Per-Part Active Recall]")
+    print("part              Active MAE   Mean GT   Mean Pred   Recall@0.1(gt>0)   Recall@0.3(gt>=0.3)")
+    for idx, name in enumerate(part_names):
+        active = max(totals['part_active'][idx], 1.0)
+        gt03 = max(totals['part_gt_03'][idx], 1.0)
+        part_mae = totals['part_active_mae'][idx] / active
+        mean_gt = totals['part_gt_sum'][idx] / active
+        mean_pred = totals['part_pred_on_active_sum'][idx] / active
+        recall01 = totals['part_recall_01'][idx] / active
+        recall03 = totals['part_recall_03'][idx] / gt03
+        print(f"{name:<16} {part_mae:10.4f} {mean_gt:9.4f} {mean_pred:11.4f} {recall01:17.4f} {recall03:20.4f}")
+    print()
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Evaluate Proposed TGCN Model Metrics")
-    parser.add_argument('--mmap_path', type=str, default='./dataset_mmap.npy', help='Path to combined memmap data')
+    parser.add_argument('--mmap_path', type=str, default='./scene_splits/dataset_scene_test.npy', help='Path to scene-level test memmap data')
     parser.add_argument('--weights_path', type=str, default='./baselines/MLP_cVAE_MoE/weights/best.pth', help='Path to best trained weights')
     parser.add_argument('--batch_size', type=int, default=16)
+    parser.add_argument('--seq_len', type=int, default=60)
+    parser.add_argument('--stride', type=int, default=1, help='Use 60 for a fast non-overlapping evaluation pass')
+    parser.add_argument('--split_mode', type=str, default='all', choices=['train', 'val', 'test', 'all'], help='Use all for pre-split scene mmap files')
     
     args = parser.parse_args()
     main(args)

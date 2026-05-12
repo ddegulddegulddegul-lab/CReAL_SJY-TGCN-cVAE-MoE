@@ -1,0 +1,31 @@
+case_type,split,scene,frame_index,window_start,part,gt_max,gt_sum,pred_max,score,note
+right_hand_gt_contact,test,lc_Extraction,5124,5094,right_hand,0.9321885704994202,14.779838562011719,,0.9321885704994202,GT-only candidate; rerun with --with_predictions after a checkpoint is ready to mine failures.
+right_hand_gt_contact,test,hcw_Extraction,1946,1916,right_hand,0.9275304079055786,17.126708984375,,0.9275304079055786,GT-only candidate; rerun with --with_predictions after a checkpoint is ready to mine failures.
+right_hand_gt_contact,test,lc_Extraction,4548,4518,right_hand,0.9096791744232178,12.66774845123291,,0.9096791744232178,GT-only candidate; rerun with --with_predictions after a checkpoint is ready to mine failures.
+right_hand_gt_contact,test,hcw_Extraction,552,522,right_hand,0.882644772529602,40.51682662963867,,0.882644772529602,GT-only candidate; rerun with --with_predictions after a checkpoint is ready to mine failures.
+right_hand_gt_contact,test,hcw_Extraction,73,43,right_hand,0.8705934882164001,38.21967697143555,,0.8705934882164001,GT-only candidate; rerun with --with_predictions after a checkpoint is ready to mine failures.
+right_hand_gt_contact,test,hcw_Extraction,1347,1317,right_hand,0.8693181276321411,28.054256439208984,,0.8693181276321411,GT-only candidate; rerun with --with_predictions after a checkpoint is ready to mine failures.
+left_hand_gt_contact,test,hcw_Extraction,553,523,left_hand,0.9443113207817078,21.24903678894043,,0.9443113207817078,GT-only candidate; rerun with --with_predictions after a checkpoint is ready to mine failures.
+left_hand_gt_contact,test,hcw_Extraction,924,894,left_hand,0.9422168135643005,16.998838424682617,,0.9422168135643005,GT-only candidate; rerun with --with_predictions after a checkpoint is ready to mine failures.
+left_hand_gt_contact,test,hcw_Extraction,2164,2134,left_hand,0.9398239850997925,17.908817291259766,,0.9398239850997925,GT-only candidate; rerun with --with_predictions after a checkpoint is ready to mine failures.
+left_hand_gt_contact,test,lc_Extraction,4750,4720,left_hand,0.935516893863678,6.725168228149414,,0.935516893863678,GT-only candidate; rerun with --with_predictions after a checkpoint is ready to mine failures.
+left_hand_gt_contact,test,hcw_Extraction,79,49,left_hand,0.9353755116462708,16.642980575561523,,0.9353755116462708,GT-only candidate; rerun with --with_predictions after a checkpoint is ready to mine failures.
+left_hand_gt_contact,test,hcw_Extraction,658,628,left_hand,0.9331972002983093,19.079343795776367,,0.9331972002983093,GT-only candidate; rerun with --with_predictions after a checkpoint is ready to mine failures.
+spine_hand_overlap_gt,test,hcw_Extraction,2190,2160,spine+hand,0.9244611859321594,52.755226135253906,,0.9217309951782227,Use this to inspect waist/hand ambiguity.
+spine_hand_overlap_gt,test,hcw_Extraction,950,920,spine+hand,0.9019799828529358,52.26976776123047,,0.8990020751953125,Use this to inspect waist/hand ambiguity.
+spine_hand_overlap_gt,test,hcw_Extraction,1937,1907,spine+hand,0.8736299276351929,44.262516021728516,,0.8692950010299683,Use this to inspect waist/hand ambiguity.
+spine_hand_overlap_gt,test,hcw_Extraction,565,535,spine+hand,0.9305775761604309,51.2264404296875,,0.8689031004905701,Use this to inspect waist/hand ambiguity.
+spine_hand_overlap_gt,test,hcw_Extraction,58,28,spine+hand,0.9215419292449951,45.76344299316406,,0.8634753823280334,Use this to inspect waist/hand ambiguity.
+spine_hand_overlap_gt,test,hcw_Extraction,1860,1830,spine+hand,0.8650382161140442,74.71476745605469,,0.8171300292015076,Use this to inspect waist/hand ambiguity.
+pelvis_gt_contact,test,lc_Extraction,5012,4982,pelvis_base,0.9740508198738098,81.42391204833984,,0.9740508198738098,GT-only candidate; rerun with --with_predictions after a checkpoint is ready to mine failures.
+pelvis_gt_contact,test,lc_Extraction,9439,9409,pelvis_base,0.9733303189277649,82.04307556152344,,0.9733303189277649,GT-only candidate; rerun with --with_predictions after a checkpoint is ready to mine failures.
+pelvis_gt_contact,test,lc_Extraction,7678,7648,pelvis_base,0.9682211875915527,81.00172424316406,,0.9682211875915527,GT-only candidate; rerun with --with_predictions after a checkpoint is ready to mine failures.
+pelvis_gt_contact,test,lc_Extraction,7624,7594,pelvis_base,0.967526912689209,80.23467254638672,,0.967526912689209,GT-only candidate; rerun with --with_predictions after a checkpoint is ready to mine failures.
+pelvis_gt_contact,test,lc_Extraction,8581,8551,pelvis_base,0.967423677444458,80.82493591308594,,0.967423677444458,GT-only candidate; rerun with --with_predictions after a checkpoint is ready to mine failures.
+pelvis_gt_contact,test,lc_Extraction,6018,5988,pelvis_base,0.966231107711792,52.87273025512695,,0.966231107711792,GT-only candidate; rerun with --with_predictions after a checkpoint is ready to mine failures.
+foot_gt_contact,test,lc_Extraction,2949,2919,left_foot,1.0,22.573606491088867,,1.0,Positive control case for easier contacts.
+foot_gt_contact,test,lc_Extraction,2442,2412,left_foot,1.0,26.578659057617188,,1.0,Positive control case for easier contacts.
+foot_gt_contact,test,lc_Extraction,2493,2463,left_foot,1.0,23.411941528320312,,1.0,Positive control case for easier contacts.
+foot_gt_contact,test,lc_Extraction,2655,2625,left_foot,1.0,34.14474868774414,,1.0,Positive control case for easier contacts.
+foot_gt_contact,test,hcw_Extraction,543,513,left_foot,1.0,17.273298263549805,,1.0,Positive control case for easier contacts.
+foot_gt_contact,test,lc_Extraction,2896,2866,right_foot,1.0,23.679901123046875,,1.0,Positive control case for easier contacts.

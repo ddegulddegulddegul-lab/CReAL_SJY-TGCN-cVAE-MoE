@@ -13,7 +13,7 @@ import numpy as np
 # Bind to shared utils and local model
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../utils')))
 from dataset import get_dataloader
-from model import IIWTGCN_cVAE_MLP
+from model import IIWTGCN_cVAE_TGCN
 
 def loss_function(pred_iiw, gt_iiw, mu, logvar, beta=1.0):
     recon_loss = F.mse_loss(pred_iiw, gt_iiw, reduction='mean')
@@ -86,32 +86,45 @@ def validate(model, dataloader, device, fast_test=False):
 
 def main(args):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    print(f"--- Training Baseline TGCN-cVAE+MLP ---")
+    print(f"--- Training Baseline TGCN-cVAE+TGCN ---")
     print(f"Device: {device}")
     print(f"PID: {os.getpid()}")
     print("-" * 40)
     
-    # Check data path
-    if not os.path.exists(args.mmap_path):
-        print(f"Error: dataset memory map not found at {args.mmap_path}")
-        return
-        
-    real_data = np.lib.format.open_memmap(args.mmap_path, mode='r', dtype=np.float32)
-    print(f"Loaded Total Memmap Shape: {real_data.shape}")
+    use_scene_split = os.path.exists(args.train_mmap_path) and os.path.exists(args.val_mmap_path)
+    if use_scene_split:
+        train_data = np.load(args.train_mmap_path, mmap_mode='r')
+        val_data = np.load(args.val_mmap_path, mmap_mode='r')
+        train_split_mode = 'all'
+        val_split_mode = 'all'
+        print(f"Loaded Scene Train Memmap Shape: {train_data.shape}")
+        print(f"Loaded Scene Val Memmap Shape: {val_data.shape}")
+    else:
+        if not os.path.exists(args.mmap_path):
+            print(f"Error: dataset memory map not found at {args.mmap_path}")
+            print(f"Also missing scene split paths: {args.train_mmap_path}, {args.val_mmap_path}")
+            return
+        real_data = np.load(args.mmap_path, mmap_mode='r')
+        train_data = real_data
+        val_data = real_data
+        train_split_mode = 'train'
+        val_split_mode = 'val'
+        print(f"Loaded Total Memmap Shape: {real_data.shape}")
+        print("Warning: scene split mmap files were not found; falling back to frame-level 80/10 split.")
     
-    # Dataloaders with automatic split feature
-    print("Initializing Data Loaders (Train 80% / Val 10%)...")
+    # Dataloaders
+    print("Initializing Data Loaders...")
     if args.fast_test: print(">> FAST TEST MODE ENABLED (mini-epochs) <<")
-    _, train_loader = get_dataloader(real_data, seq_len=args.seq_len, stride=args.stride, 
+    _, train_loader = get_dataloader(train_data, seq_len=args.seq_len, stride=args.stride, 
                                      batch_size=args.batch_size, shuffle=True, 
-                                     num_workers=args.num_workers, split_mode='train')
+                                     num_workers=args.num_workers, split_mode=train_split_mode)
     
-    _, val_loader = get_dataloader(real_data, seq_len=args.seq_len, stride=args.seq_len, # Non-overlapping for val
+    _, val_loader = get_dataloader(val_data, seq_len=args.seq_len, stride=args.seq_len, # Non-overlapping for val
                                    batch_size=args.batch_size, shuffle=False, 
-                                   num_workers=args.num_workers, split_mode='val')
+                                   num_workers=args.num_workers, split_mode=val_split_mode)
     
     # Model
-    model = IIWTGCN_cVAE_MLP().to(device)
+    model = IIWTGCN_cVAE_TGCN().to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=1e-4)
     
     os.makedirs(args.save_dir, exist_ok=True)
@@ -143,8 +156,10 @@ def main(args):
     print("Training finished.")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Train Baseline TGCN+MLP Model")
-    parser.add_argument('--mmap_path', type=str, default='./dataset_mmap.npy', help='Path to combined memmap data')
+    parser = argparse.ArgumentParser(description="Train Baseline TGCN-cVAE-TGCN Model")
+    parser.add_argument('--mmap_path', type=str, default='./dataset_mmap.npy', help='Fallback path to combined frame-level memmap data')
+    parser.add_argument('--train_mmap_path', type=str, default='./scene_splits/dataset_scene_train.npy', help='Scene-level train memmap path')
+    parser.add_argument('--val_mmap_path', type=str, default='./scene_splits/dataset_scene_val.npy', help='Scene-level validation memmap path')
     parser.add_argument('--save_dir', type=str, default='./baselines/TGCN_cVAE_TGCN/weights', help='Directory to save model weights')
     parser.add_argument('--epochs', type=int, default=50)
     parser.add_argument('--batch_size', type=int, default=32)

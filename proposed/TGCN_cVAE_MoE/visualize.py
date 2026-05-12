@@ -56,7 +56,7 @@ def pre_load_all_data(weights_path, data_files, device):
         ray_feats = batch['ray_features'].to(device)
         
         with torch.no_grad():
-            pred_iiw, _, _ = model(node_feats, ray_feats)
+            pred_iiw = model(node_feats, ray_feats)[0]
             
         n_cpu = node_feats.cpu().numpy()
         loaded_data[filename] = {
@@ -103,6 +103,7 @@ def main(args):
     server.scene.add_grid("/floor_grid", width=10.0, height=10.0, cell_size=0.5, plane="xy")
     
     body_parts = ["All Parts", "base/pelvis", "spine", "right hand", "left hand", "right foot", "left foot"]
+    part_colormaps = ["Reds", "Purples", "Greens", "Greens", "Blues", "Blues"]
     
     file_dropdown = server.gui.add_dropdown("Dataset Sequence", options=file_options, initial_value=file_options[0])
     with server.gui.add_folder("Playback Controls"):
@@ -169,19 +170,16 @@ def main(args):
                 w = max_w[i]
                 if w >= 0.6:
                     norm_w = (w - 0.6) / 0.4
-                    # 0: base(Red), 1: spine(Purple), 2/3: hands(Orange), 4/5: feet(Blue)
-                    c_map = ["Reds", "Purples", "Oranges", "Oranges", "Blues", "Blues"][dom_p[i]]
+                    # 0: base, 1: spine, 2/3: hands, 4/5: feet
+                    c_map = part_colormaps[dom_p[i]]
                     colors_float[i] = plt.get_cmap(c_map)(norm_w)[:3]
                     
-            # Spine override
-            for i in range(540):
-                if all_weights[1, i] >= 0.6 and all_weights[0, i] < 0.8:
-                    colors_float[i] = plt.get_cmap("Purples")((all_weights[1, i]-0.6)/0.4)[:3]
         else:
             w = pred_iiw[0, t, part_idx - 1, :]
             mask = w >= 0.6
             if np.any(mask):
-                colors_float[mask] = plt.get_cmap("Reds")((w[mask]-0.6)/0.4)[:, :3]
+                c_map = part_colormaps[part_idx - 1]
+                colors_float[mask] = plt.get_cmap(c_map)((w[mask]-0.6)/0.4)[:, :3]
                 
         server.scene.add_point_cloud(
             "/furniture_rays", points=r_pos, colors=(colors_float * 255).astype(np.uint8), point_size=0.02
@@ -203,7 +201,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Visualize TGCN IIW Model")
     parser.add_argument("--data_dir", type=str, default="./data/", help="Folder containing .npz sequences")
-    parser.add_argument("--weights_path", type=str, default="./proposed/TGCN_cVAE_MoE/weights/best.pth", help="Path to trained model weights")
+    parser.add_argument("--weights_path", type=str, default="./proposed/TGCN_cVAE_MoE/weights_ver2/best.pth", help="Path to trained model weights")
     parser.add_argument("--port", type=int, default=8080)
     args = parser.parse_args()
     main(args)

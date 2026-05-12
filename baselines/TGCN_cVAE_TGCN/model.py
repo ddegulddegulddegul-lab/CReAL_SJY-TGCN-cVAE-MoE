@@ -144,30 +144,76 @@ class TGCNEncoder(nn.Module):
         
         return mu, logvar, encoded_rays
 
-class SimpleMLPDecoder(nn.Module):
-    def __init__(self, in_channels, out_dim=6):
-        super(SimpleMLPDecoder, self).__init__()
-        hidden_dim = in_channels // 2
-        
-        self.mlp = nn.Sequential(
-            nn.Linear(in_channels, hidden_dim * 2),
-            nn.ReLU(),
-            nn.Linear(hidden_dim * 2, hidden_dim),
-            nn.ReLU(),
-            nn.Linear(hidden_dim, out_dim)
+class RayGraphAdjacency(nn.Module):
+    """
+    Fixed learnable ray graph used by the decoder.
+
+    The encoder already models human-ray geometry.  The decoder receives
+    ray-conditioned latent features and propagates them over the ray sampling
+    topology, then through temporal convolutions, so this baseline is genuinely
+    TGCN on both encoder and decoder sides.
+    """
+    def __init__(self, num_rays=540, ray_vertical=140, ray_horizontal=400, k_neighbor=2):
+        super(RayGraphAdjacency, self).__init__()
+        assert num_rays == ray_vertical + ray_horizontal, "Ray split sum must match num_rays"
+        self.num_rays = num_rays
+
+        A_base = torch.zeros(num_rays, num_rays)
+        for start, end in ((0, ray_vertical), (ray_vertical, num_rays)):
+            for i in range(start, end):
+                for j in range(max(start, i - k_neighbor), min(end, i + k_neighbor + 1)):
+                    A_base[i, j] = 1.0
+
+        A_base.fill_diagonal_(1.0)
+        A_base = torch.clamp(A_base + A_base.T, max=1.0)
+        D = torch.sum(A_base, dim=1)
+        D_inv_sqrt = torch.pow(D, -0.5)
+        D_inv_sqrt[torch.isinf(D_inv_sqrt)] = 0.0
+        D_mat_inv_sqrt = torch.diag(D_inv_sqrt)
+        A_norm = torch.matmul(torch.matmul(D_mat_inv_sqrt, A_base), D_mat_inv_sqrt)
+
+        self.register_buffer("A_base", A_norm)
+        self.PA = nn.Parameter(torch.zeros(num_rays, num_rays))
+
+    def forward(self, batch_time, device):
+        A = torch.relu(self.A_base + self.PA)
+        A = torch.clamp(A, min=0.0, max=2.0)
+        return A.unsqueeze(0).expand(batch_time, -1, -1).to(device)
+
+
+class TGCNDecoder(nn.Module):
+    def __init__(self, in_channels, hidden_dim=128, out_dim=6, num_rays=540):
+        super(TGCNDecoder, self).__init__()
+        self.input_proj = nn.Linear(in_channels, hidden_dim)
+        self.ray_graph = RayGraphAdjacency(num_rays=num_rays)
+        self.tgcn_blocks = nn.ModuleList([
+            TGCNBlock(hidden_dim, hidden_dim, tcn_kernel_size=5, stride=1, dilation=1),
+            TGCNBlock(hidden_dim, hidden_dim, tcn_kernel_size=3, stride=1, dilation=2),
+        ])
+        self.output_head = nn.Sequential(
+            nn.Conv2d(hidden_dim, hidden_dim // 2, kernel_size=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(hidden_dim // 2, out_dim, kernel_size=1),
         )
 
     def forward(self, z_c):
-        out = self.mlp(z_c) 
-        return torch.relu(out) 
+        B, T, R, _ = z_c.shape
+        x = self.input_proj(z_c)
+        x = x.permute(0, 3, 1, 2).contiguous()
+        A = self.ray_graph(B * T, x.device)
+        for block in self.tgcn_blocks:
+            x = block(x, A)
+        out = self.output_head(x)
+        return torch.relu(out.permute(0, 2, 3, 1).contiguous())
 
-class IIWTGCN_cVAE_MLP(nn.Module):
+
+class IIWTGCN_cVAE_TGCN(nn.Module):
     def __init__(self, node_in_dim=9, ray_in_dim=4, hidden_dim=64, z_dim=32, num_body_parts=6):
-        super(IIWTGCN_cVAE_MLP, self).__init__()
+        super(IIWTGCN_cVAE_TGCN, self).__init__()
         self.encoder = TGCNEncoder(node_in_dim, ray_in_dim, hidden_dim, z_dim)
         
         decoder_in_dim = z_dim + (hidden_dim * 2)
-        self.decoder = SimpleMLPDecoder(in_channels=decoder_in_dim, out_dim=num_body_parts)
+        self.decoder = TGCNDecoder(in_channels=decoder_in_dim, hidden_dim=hidden_dim * 2, out_dim=num_body_parts)
 
     def reparameterize(self, mu, logvar):
         std = torch.exp(0.5 * logvar)
@@ -192,3 +238,8 @@ class IIWTGCN_cVAE_MLP(nn.Module):
         pred_iiw = pred_iiw.permute(0, 1, 3, 2).contiguous()
         
         return pred_iiw, mu, logvar
+
+
+# Backward-compatible alias for older scripts/checkpoints that imported the old
+# class name from this folder.
+IIWTGCN_cVAE_MLP = IIWTGCN_cVAE_TGCN

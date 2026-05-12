@@ -56,7 +56,7 @@ def pre_load_all_data(weights_path, data_files, device):
         ray_feats = batch['ray_features'].to(device)
         
         with torch.no_grad():
-            pred_iiw, _, _ = model(node_feats, ray_feats)
+            pred_iiw = model(node_feats, ray_feats)[0]
             
         n_cpu = node_feats.cpu().numpy()
         loaded_data[filename] = {
@@ -204,7 +204,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Visualize TGCN IIW Model")
     parser.add_argument("--data_dir", type=str, default="./data/", help="Folder containing .npz sequences")
-    parser.add_argument("--weights_path", type=str, default="./proposed/TGCN_cVAE_MoE/weights/best.pth", help="Path to trained model weights")
+    parser.add_argument("--weights_path", type=str, default="./proposed/TGCN_cVAE_MoE/weights_ver2/best.pth", help="Path to trained model weights")
     parser.add_argument("--port", type=int, default=8080)
     args = parser.parse_args()
     main(args)

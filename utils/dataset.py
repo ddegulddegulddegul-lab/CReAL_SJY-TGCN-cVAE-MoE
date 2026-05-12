@@ -1,5 +1,5 @@
 import torch
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset, DataLoader, WeightedRandomSampler
 import numpy as np
 
 class IIWDataset(Dataset):
@@ -76,10 +76,66 @@ class IIWDataset(Dataset):
         return {
             'node_features': node_features,
             'ray_features': ray_features,   # Now 4-dimensional!
-            'gt_iiw': gt_iiw
+            'gt_iiw': gt_iiw,
+            'part_active': (gt_iiw > 0.0).any(dim=-1).float()
         }
 
-def get_dataloader(data_array, seq_len=30, stride=1, batch_size=32, shuffle=True, num_workers=8, split_mode='all'):
+    def sequence_part_flags(self, threshold=0.0, chunk_size=4096):
+        """
+        Returns a (num_sequences, 6) boolean array indicating which body parts
+        have any active IIW inside each temporal training window.
+        """
+        if self.num_sequences == 0:
+            return np.zeros((0, 6), dtype=bool)
+
+        frame_flags = np.zeros((self.total_frames, 6), dtype=np.bool_)
+        for start in range(0, self.total_frames, chunk_size):
+            end = min(self.total_frames, start + chunk_size)
+            gt = self.data[start:end, 7224:10464].reshape(end - start, 6, 540)
+            frame_flags[start:end] = (gt > threshold).any(axis=2)
+
+        cumsum = np.concatenate(
+            [np.zeros((1, 6), dtype=np.int32), np.cumsum(frame_flags, axis=0, dtype=np.int32)],
+            axis=0
+        )
+        starts = np.arange(self.num_sequences) * self.stride
+        ends = starts + self.seq_len
+        counts = cumsum[ends] - cumsum[starts]
+        return counts > 0
+
+
+def build_contact_balanced_weights(
+    dataset,
+    threshold=0.0,
+    part_weights=(1.0, 3.0, 10.0, 10.0, 1.0, 1.0),
+    base_weight=1.0,
+):
+    """
+    Builds sequence-level sampling weights so rare hand/spine contact windows
+    are not drowned out by pelvis/foot and all-zero windows.
+    """
+    flags = dataset.sequence_part_flags(threshold=threshold)
+    if len(flags) == 0:
+        return np.array([], dtype=np.float64)
+
+    part_weights = np.asarray(part_weights, dtype=np.float64)
+    weights = np.full(flags.shape[0], base_weight, dtype=np.float64)
+    weights += flags.astype(np.float64) @ part_weights
+    return weights
+
+
+def get_dataloader(
+    data_array,
+    seq_len=30,
+    stride=1,
+    batch_size=32,
+    shuffle=True,
+    num_workers=8,
+    split_mode='all',
+    balance_contacts=False,
+    sampler_part_weights=(1.0, 3.0, 10.0, 10.0, 1.0, 1.0),
+    sampler_threshold=0.0,
+):
     """
     Returns the initialized dataset and its corresponding DataLoader for the specified split.
     """
@@ -89,10 +145,25 @@ def get_dataloader(data_array, seq_len=30, stride=1, batch_size=32, shuffle=True
     if len(dataset) == 0:
         return dataset, None
         
+    sampler = None
+    if balance_contacts:
+        weights = build_contact_balanced_weights(
+            dataset,
+            threshold=sampler_threshold,
+            part_weights=sampler_part_weights,
+        )
+        sampler = WeightedRandomSampler(
+            weights=torch.as_tensor(weights, dtype=torch.double),
+            num_samples=len(dataset),
+            replacement=True,
+        )
+        shuffle = False
+
     dataloader = DataLoader(
         dataset, 
         batch_size=batch_size, 
         shuffle=shuffle, 
+        sampler=sampler,
         num_workers=num_workers,
         pin_memory=True,
         persistent_workers=True if num_workers > 0 else False,

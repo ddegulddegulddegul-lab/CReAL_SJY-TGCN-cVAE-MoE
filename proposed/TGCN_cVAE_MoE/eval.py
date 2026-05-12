@@ -13,11 +13,19 @@ import torch.nn.functional as F
 import argparse
 import sys
 import os
+from pathlib import Path
 from tqdm import tqdm
 
 # Bind to shared utils and local proposed model
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../utils')))
 from dataset import get_dataloader
+from iiw_metrics import (
+    empty_metric_totals,
+    finalize_metric_summary,
+    print_metric_summary,
+    save_metric_outputs,
+    update_metric_totals,
+)
 from model import IIWTGCN_cVAE
 
 def compute_metrics(pred_iiw, gt_iiw, node_feats, ray_feats):
@@ -52,6 +60,14 @@ def compute_metrics(pred_iiw, gt_iiw, node_feats, ray_feats):
     jitter_diff = torch.abs(pred_diff - gt_diff)
     jittering = jitter_diff.sum().item()
     jittering_elements = B * (T - 1) * num_parts * num_rays
+
+    part_active = active_mask.sum(dim=(0, 1, 3)).detach().cpu().numpy()
+    part_active_mae = torch.abs(pred_iiw - gt_iiw).masked_fill(~active_mask, 0).sum(dim=(0, 1, 3)).detach().cpu().numpy()
+    part_gt_sum = gt_iiw.masked_fill(~active_mask, 0).sum(dim=(0, 1, 3)).detach().cpu().numpy()
+    part_pred_on_active_sum = pred_iiw.masked_fill(~active_mask, 0).sum(dim=(0, 1, 3)).detach().cpu().numpy()
+    part_recall_01 = ((pred_iiw >= 0.1) & active_mask).sum(dim=(0, 1, 3)).detach().cpu().numpy()
+    part_recall_03 = ((pred_iiw >= 0.3) & (gt_iiw >= 0.3)).sum(dim=(0, 1, 3)).detach().cpu().numpy()
+    part_gt_03 = (gt_iiw >= 0.3).sum(dim=(0, 1, 3)).detach().cpu().numpy()
     
     return {
         'mae_sum': mae,
@@ -59,7 +75,14 @@ def compute_metrics(pred_iiw, gt_iiw, node_feats, ray_feats):
         'active_mae_sum': active_mae,
         'active_elements': max(active_elements, 1),
         'jit_sum': jittering,
-        'jit_elements': max(jittering_elements, 1)
+        'jit_elements': max(jittering_elements, 1),
+        'part_active': part_active,
+        'part_active_mae': part_active_mae,
+        'part_gt_sum': part_gt_sum,
+        'part_pred_on_active_sum': part_pred_on_active_sum,
+        'part_recall_01': part_recall_01,
+        'part_recall_03': part_recall_03,
+        'part_gt_03': part_gt_03,
     }
 
 def main(args):
@@ -75,9 +98,10 @@ def main(args):
     print("Initializing Test DataLoader (10% Split)...")
     _, test_loader = get_dataloader(data_array=data_array, 
                                  batch_size=args.batch_size, 
-                                 seq_len=60, 
+                                 seq_len=args.seq_len,
+                                 stride=args.stride,
                                  num_workers=0, 
-                                 split_mode='test')
+                                 split_mode=args.split_mode)
     
     if len(test_loader) == 0:
         print("Error: Test dataset is empty. Check your data split.")
@@ -102,12 +126,9 @@ def main(args):
     model.eval()
     
     # 3. Metric Accumulators
-    totals = {
-        'mae_sum': 0.0, 'elements': 0,
-        'active_mae_sum': 0.0, 'active_elements': 0,
-        'jit_sum': 0.0, 'jit_elements': 0,
-        'infer_time': 0.0, 'infer_batches': 0
-    }
+    totals = empty_metric_totals()
+    infer_time = 0.0
+    infer_batches = 0
     
     print("Evaluating over strictly isolated Test Set...")
     with torch.no_grad():
@@ -121,41 +142,34 @@ def main(args):
                 start_event = torch.cuda.Event(enable_timing=True)
                 end_event = torch.cuda.Event(enable_timing=True)
                 start_event.record()
+            else:
+                cpu_start = time.perf_counter()
                 
-            pred_iiw, _, _ = model(node_feats, ray_feats)
+            pred_iiw, _, _, _ = model(node_feats, ray_feats)
             
             if device.type == 'cuda':
                 end_event.record()
                 torch.cuda.synchronize()
-                totals['infer_time'] += start_event.elapsed_time(end_event) # In milliseconds
-                totals['infer_batches'] += 1
+                infer_time += start_event.elapsed_time(end_event) # In milliseconds
+                infer_batches += 1
             else:
-                totals['infer_time'] = 0.0
-                totals['infer_batches'] = 1
+                infer_time += (time.perf_counter() - cpu_start) * 1000.0
+                infer_batches += 1
             
-            # Extract Metrics
-            res = compute_metrics(pred_iiw, gt_iiw, node_feats, ray_feats)
-            
-            for k in res.keys():
-                totals[k] += res[k]
+            update_metric_totals(totals, pred_iiw, gt_iiw, contact_threshold=args.contact_threshold)
                 
-    # 4. Final Calculations
-    mae = totals['mae_sum'] / totals['elements']
-    active_mae = totals['active_mae_sum'] / totals['active_elements']
-    jittering = totals['jit_sum'] / totals['jit_elements']
-    
     # Efficiency Calculations
-    avg_infer_time_ms = totals['infer_time'] / max(totals['infer_batches'], 1)
+    avg_infer_time_ms = infer_time / max(infer_batches, 1)
     
     # Calculate FLOPs and Params using dummy inputs matching batch size 1
     flops_str = "N/A"
-    params_str = "N/A"
+    params_m = None
     
     try:
         dummy_node = torch.randn(1, 60, 15, 9).to(device)
         dummy_ray = torch.randn(1, 60, 540, 4).to(device)
         num_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
-        params_str = f"{num_params / 1e6:.2f} M"
+        params_m = num_params / 1e6
         
         if FlopCountAnalysis is not None:
             flops = FlopCountAnalysis(model, (dummy_node, dummy_ray))
@@ -163,28 +177,45 @@ def main(args):
             flops_str = f"{total_flops / 1e9:.2f} G"
     except Exception as e:
         flops_str = "Error calculating FLOPs"
-        
-    print("\n" + "="*50)
-    print("🏆 FINAL EVALUATION METRICS (IIW GENERATOR - TGCN_cVAE_MoE) 🏆")
-    print("="*50)
-    print("[1. Prediction Accuracy]")
-    print(f"1. Overall IIW MAE : {mae:.4f}     (Lower = Better Avg Acc)")
-    print(f"2. Active IIW MAE  : {active_mae:.4f}     (Lower = Peak Accuracy)")
-    print("-" * 50)
-    print("[2. Temporal Stability]")
-    print(f"3. IIW Jittering   : {jittering:.4f}     (Lower = Temporal Consistency)")
-    print("-" * 50)
-    print("[3. Computational Efficiency]")
-    print(f"4. Parameters      : {params_str}")
-    print(f"5. Inference Speed : {avg_infer_time_ms:.2f} ms / batch")
-    print(f"6. FLOPs (1 seq)   : {flops_str}")
-    print("="*50 + "\n")
+
+    checkpoint = Path(args.weights_path).stem
+    output_json = args.output_json or f"./experiments/metrics/{args.version}_{args.model_name}_{checkpoint}_{args.split_name}.json"
+    summary = finalize_metric_summary(
+        totals,
+        metadata={
+            "version": args.version,
+            "model": args.model_name,
+            "checkpoint": checkpoint,
+            "weights_path": args.weights_path,
+            "split": args.split_name,
+            "mmap_path": args.mmap_path,
+            "seq_len": args.seq_len,
+            "stride": args.stride,
+            "batch_size": args.batch_size,
+        },
+        efficiency={
+            "inference_ms_per_batch": avg_infer_time_ms,
+            "params_m": params_m if params_m is not None else 0.0,
+            "flops_g": flops_str,
+        },
+    )
+    print_metric_summary(summary, title="FINAL EVALUATION METRICS - TGCN_cVAE_MoE")
+    save_metric_outputs(summary, json_path=output_json, flat_csv_path=args.flat_csv)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Evaluate Proposed TGCN Model Metrics")
-    parser.add_argument('--mmap_path', type=str, default='./dataset_mmap.npy', help='Path to combined memmap data')
-    parser.add_argument('--weights_path', type=str, default='./proposed/TGCN_cVAE_MoE/weights/best.pth', help='Path to best trained weights')
+    parser.add_argument('--mmap_path', type=str, default='./scene_splits_contact_stratified/dataset_scene_test.npy', help='Path to scene-level test memmap data')
+    parser.add_argument('--weights_path', type=str, default='./proposed/TGCN_cVAE_MoE/weights_ver2_contact_f1/best.pth', help='Path to best trained weights')
     parser.add_argument('--batch_size', type=int, default=16)
+    parser.add_argument('--seq_len', type=int, default=60)
+    parser.add_argument('--stride', type=int, default=1, help='Use 60 for a fast non-overlapping evaluation pass')
+    parser.add_argument('--split_mode', type=str, default='all', choices=['train', 'val', 'test', 'all'], help='Use all for pre-split scene mmap files')
+    parser.add_argument('--contact_threshold', type=float, default=0.0)
+    parser.add_argument('--version', type=str, default='iiw_ver2')
+    parser.add_argument('--model_name', type=str, default='TGCN_cVAE_MoE')
+    parser.add_argument('--split_name', type=str, default='scene_test')
+    parser.add_argument('--output_json', type=str, default='', help='Metric JSON path. Default is derived from checkpoint name.')
+    parser.add_argument('--flat_csv', type=str, default='./experiments/results_flat.csv', help='Append one flattened row per evaluation run.')
     
     args = parser.parse_args()
     main(args)

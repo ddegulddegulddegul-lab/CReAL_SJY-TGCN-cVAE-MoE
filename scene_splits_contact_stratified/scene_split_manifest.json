@@ -1,0 +1,249 @@
+{
+  "data_dir": "/home/song/research/iiw_ver2/Extraction",
+  "feature_dim": 10464,
+  "total_scenes": 11,
+  "total_frames": 88185,
+  "ratios_requested": {
+    "train": 0.8,
+    "val": 0.1,
+    "test": 0.1
+  },
+  "global_frame_contact_ratio": {
+    "pelvis_base": 0.7400918523558428,
+    "spine": 0.5249418835402846,
+    "right_hand": 0.23264727561376652,
+    "left_hand": 0.23276067358394284,
+    "right_foot": 0.8608380109996031,
+    "left_foot": 0.866439870726314
+  },
+  "splits": {
+    "train": {
+      "mmap_path": "/home/song/research/iiw_ver2/scene_splits_contact_stratified/dataset_scene_train.npy",
+      "num_scenes": 7,
+      "num_frames": 67738,
+      "scene_ranges": [
+        {
+          "scene": "hc_Extraction",
+          "start": 0,
+          "end": 2525,
+          "num_frames": 2525,
+          "num_files": 12,
+          "frame_contact_ratio": {
+            "pelvis_base": 0.6851485148514852,
+            "spine": 0.4308910891089109,
+            "right_hand": 0.02574257425742574,
+            "left_hand": 0.010297029702970298,
+            "right_foot": 0.7108910891089109,
+            "left_foot": 0.765940594059406
+          }
+        },
+        {
+          "scene": "hc_hd_Extraction",
+          "start": 2525,
+          "end": 20888,
+          "num_frames": 18363,
+          "num_files": 85,
+          "frame_contact_ratio": {
+            "pelvis_base": 0.7515656483145455,
+            "spine": 0.6079072047051135,
+            "right_hand": 0.3333333333333333,
+            "left_hand": 0.3627402929804498,
+            "right_foot": 0.7282034525948919,
+            "left_foot": 0.7505854163263084
+          }
+        },
+        {
+          "scene": "hcw_hdw_Extraction",
+          "start": 20888,
+          "end": 29136,
+          "num_frames": 8248,
+          "num_files": 36,
+          "frame_contact_ratio": {
+            "pelvis_base": 0.7843113482056256,
+            "spine": 0.6521580989330746,
+            "right_hand": 0.2697623666343356,
+            "left_hand": 0.20489815712900097,
+            "right_foot": 0.7898884578079535,
+            "left_foot": 0.8380213385063046
+          }
+        },
+        {
+          "scene": "lc_Extraction",
+          "start": 29136,
+          "end": 36607,
+          "num_frames": 7471,
+          "num_files": 34,
+          "frame_contact_ratio": {
+            "pelvis_base": 0.5801097577298889,
+            "spine": 0.3996787578637398,
+            "right_hand": 0.0026770178021683845,
+            "left_hand": 0.001873912461517869,
+            "right_foot": 0.940302503011645,
+            "left_foot": 0.9350823182974167
+          }
+        },
+        {
+          "scene": "lc_ld_Extraction",
+          "start": 36607,
+          "end": 44909,
+          "num_frames": 8302,
+          "num_files": 43,
+          "frame_contact_ratio": {
+            "pelvis_base": 0.7643941218983378,
+            "spine": 0.463743676222597,
+            "right_hand": 0.2509033967718622,
+            "left_hand": 0.2678872560828716,
+            "right_foot": 0.9249578414839797,
+            "left_foot": 0.9005059021922428
+          }
+        },
+        {
+          "scene": "lc_ld_a_Extraction",
+          "start": 44909,
+          "end": 62176,
+          "num_frames": 17267,
+          "num_files": 79,
+          "frame_contact_ratio": {
+            "pelvis_base": 0.8189031099785719,
+            "spine": 0.5139283025424219,
+            "right_hand": 0.3192795505878265,
+            "left_hand": 0.2966352000926623,
+            "right_foot": 0.9408119534371924,
+            "left_foot": 0.9208895581166386
+          }
+        },
+        {
+          "scene": "lcw_Extraction",
+          "start": 62176,
+          "end": 67738,
+          "num_frames": 5562,
+          "num_files": 25,
+          "frame_contact_ratio": {
+            "pelvis_base": 0.6236965120460266,
+            "spine": 0.3455591513843941,
+            "right_hand": 0.02229413879899317,
+            "left_hand": 0.05411722402013664,
+            "right_foot": 0.9020136641495865,
+            "left_foot": 0.9131607335490831
+          }
+        }
+      ],
+      "frame_contact_ratio": {
+        "pelvis_base": 0.7424045587410316,
+        "spine": 0.5205645280344858,
+        "right_hand": 0.23843337565325223,
+        "left_hand": 0.23676518350113673,
+        "right_foot": 0.8510437273022528,
+        "left_foot": 0.8572883758008799
+      },
+      "scenes": [
+        "hc_Extraction",
+        "hc_hd_Extraction",
+        "hcw_hdw_Extraction",
+        "lc_Extraction",
+        "lc_ld_Extraction",
+        "lc_ld_a_Extraction",
+        "lcw_Extraction"
+      ]
+    },
+    "val": {
+      "mmap_path": "/home/song/research/iiw_ver2/scene_splits_contact_stratified/dataset_scene_val.npy",
+      "num_scenes": 2,
+      "num_frames": 10542,
+      "scene_ranges": [
+        {
+          "scene": "hd_Extraction",
+          "start": 0,
+          "end": 7838,
+          "num_frames": 7838,
+          "num_files": 44,
+          "frame_contact_ratio": {
+            "pelvis_base": 0.6522071957131922,
+            "spine": 0.49285532023475376,
+            "right_hand": 0.22862975248787956,
+            "left_hand": 0.2837458535340648,
+            "right_foot": 0.9189844348047972,
+            "left_foot": 0.8980607297780046
+          }
+        },
+        {
+          "scene": "hdw_Extraction",
+          "start": 7838,
+          "end": 10542,
+          "num_frames": 2704,
+          "num_files": 16,
+          "frame_contact_ratio": {
+            "pelvis_base": 0.7603550295857988,
+            "spine": 0.6368343195266272,
+            "right_hand": 0.17270710059171598,
+            "left_hand": 0.1997041420118343,
+            "right_foot": 0.8727810650887574,
+            "left_foot": 0.8953402366863905
+          }
+        }
+      ],
+      "frame_contact_ratio": {
+        "pelvis_base": 0.6799468791500664,
+        "spine": 0.5297856194270537,
+        "right_hand": 0.21428571428571427,
+        "left_hand": 0.262189337886549,
+        "right_foot": 0.9071333712767976,
+        "left_foot": 0.8973629292354391
+      },
+      "scenes": [
+        "hd_Extraction",
+        "hdw_Extraction"
+      ]
+    },
+    "test": {
+      "mmap_path": "/home/song/research/iiw_ver2/scene_splits_contact_stratified/dataset_scene_test.npy",
+      "num_scenes": 2,
+      "num_frames": 9905,
+      "scene_ranges": [
+        {
+          "scene": "hcw_Extraction",
+          "start": 0,
+          "end": 2241,
+          "num_frames": 2241,
+          "num_files": 10,
+          "frame_contact_ratio": {
+            "pelvis_base": 0.5809906291834003,
+            "spine": 0.36233824185631414,
+            "right_hand": 0.01249442213297635,
+            "left_hand": 0.0285586791610888,
+            "right_foot": 0.7295850066934404,
+            "left_foot": 0.7572512271307452
+          }
+        },
+        {
+          "scene": "lcw_ldw_Extraction",
+          "start": 2241,
+          "end": 9905,
+          "num_frames": 7664,
+          "num_files": 36,
+          "frame_contact_ratio": {
+            "pelvis_base": 0.8489039665970772,
+            "spine": 0.6045146137787056,
+            "right_hand": 0.27113778705636743,
+            "left_hand": 0.21659707724425886,
+            "right_foot": 0.9221033402922756,
+            "left_foot": 0.9367171189979123
+          }
+        }
+      ],
+      "frame_contact_ratio": {
+        "pelvis_base": 0.788288743059061,
+        "spine": 0.5497223624432105,
+        "right_hand": 0.2126198889449773,
+        "left_hand": 0.1740535083291267,
+        "right_foot": 0.8785461887935386,
+        "left_foot": 0.896113074204947
+      },
+      "scenes": [
+        "hcw_Extraction",
+        "lcw_ldw_Extraction"
+      ]
+    }
+  },
+  "note": "Scene-level split from Extraction only, optimized for both frame ratio and per-part contact distribution. The data/ folder is intentionally excluded for final external testing."
+}
