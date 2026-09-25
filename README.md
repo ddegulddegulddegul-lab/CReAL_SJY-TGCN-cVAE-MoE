@@ -1,5 +1,7 @@
 # TGCN-cVAE+MoE for 3D Human-Furniture Interaction
 
+> **XYZ-only training source:** See [TRAINING_XYZ_ONLY.md](TRAINING_XYZ_ONLY.md) for the 2026-09-25 source snapshot, exact input columns, two training objectives, run commands, and checkpoint provenance. The training instructions below describe the earlier repository setup.
+
 ![Python](https://img.shields.io/badge/python-3.8%2B-blue.svg)
 ![PyTorch](https://img.shields.io/badge/PyTorch-1.12%2B-ee4c2c.svg)
 ![Viser](https://img.shields.io/badge/Viser-3D_Viz-orange.svg)
